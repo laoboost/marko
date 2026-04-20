@@ -24,7 +24,23 @@ use Marko\Database\Schema\Table;
 class PgSqlGenerator implements SqlGeneratorInterface
 {
     /**
-     * Type mapping from abstract Column types to PostgreSQL data types.
+     * SQL expression keywords and functions that should not be quoted as string literals.
+     *
+     * @var array<string>
+     */
+    private const array SQL_EXPRESSIONS = [
+        'CURRENT_TIMESTAMP',
+        'CURRENT_DATE',
+        'CURRENT_TIME',
+        'NOW',
+        'NULL',
+        'GEN_RANDOM_UUID',
+        'UUIDV4',           // PostgreSQL 18+
+        'UUIDV7',           // PostgreSQL 18+
+    ];
+
+    /**
+     * SQL expression keywords that should not be quoted.
      *
      * @var array<string, string>
      */
@@ -307,6 +323,10 @@ class PgSqlGenerator implements SqlGeneratorInterface
     private function formatDefaultValue(
         mixed $value,
     ): string {
+        if (is_string($value) && $this->isSqlExpression($value)) {
+            return $value;
+        }
+
         if (is_bool($value)) {
             return $value ? 'TRUE' : 'FALSE';
         }
@@ -323,6 +343,20 @@ class PgSqlGenerator implements SqlGeneratorInterface
         }
 
         return 'NULL';
+    }
+
+    /**
+     * Check if a string is a SQL expression.
+     */
+    private function isSqlExpression(
+        string $value,
+    ): bool {
+        $upperValue = strtoupper($value);
+        
+        return array_any(
+            self::SQL_EXPRESSIONS,
+            static fn (string $expr): bool => $upperValue === $expr || str_starts_with($upperValue, $expr),
+        );
     }
 
     /**

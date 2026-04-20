@@ -404,4 +404,59 @@ describe('PgSqlGenerator', function (): void {
         // SERIAL implies NOT NULL in PostgreSQL
         expect($sql)->toContain('"id" SERIAL PRIMARY KEY');
     });
+
+    it('maps uuid type to UUID column type', function (): void {
+        $table = new Table(
+            name: 'users',
+            columns: [
+                new Column(name: 'id', type: 'uuid', primaryKey: true),
+                new Column(name: 'ref', type: 'uuid'),
+            ],
+        );
+
+        $sql = $this->generator->generateCreateTable($table);
+
+        expect($sql)
+            ->toContain('"id" UUID PRIMARY KEY')
+            ->and($sql)->toContain('"ref" UUID NOT NULL');
+    });
+
+    it('does not quote gen_random_uuid() as a default SQL expression', function (): void {
+        $table = new Table(
+            name: 'users',
+            columns: [
+                new Column(name: 'id', type: 'uuid', primaryKey: true, default: 'gen_random_uuid()'),
+            ],
+        );
+
+        $sql = $this->generator->generateCreateTable($table);
+
+        expect($sql)->toContain('DEFAULT gen_random_uuid()');
+    });
+
+    it('does not quote CURRENT_TIMESTAMP as a default SQL expression', function (): void {
+        $table = new Table(
+            name: 'events',
+            columns: [
+                new Column(name: 'created_at', type: 'timestamp', default: 'CURRENT_TIMESTAMP'),
+            ],
+        );
+
+        $sql = $this->generator->generateCreateTable($table);
+
+        expect($sql)->toContain('DEFAULT CURRENT_TIMESTAMP');
+    });
+
+    it('treats SQL expressions case-insensitively', function (): void {
+        $table = new Table(
+            name: 'users',
+            columns: [
+                new Column(name: 'id', type: 'uuid', default: 'GEN_RANDOM_UUID()'),
+            ],
+        );
+
+        $sql = $this->generator->generateCreateTable($table);
+
+        expect($sql)->toContain('DEFAULT GEN_RANDOM_UUID()');
+    });
 });

@@ -153,6 +153,7 @@ readonly class Column
     private const array TYPE_ALIASES = [
         'enum' => 'varchar',
         'datetime' => 'timestamp',
+        'uuid' => 'char',
     ];
 
     /**

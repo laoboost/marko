@@ -540,4 +540,49 @@ describe('MySqlGenerator', function (): void {
 
         expect($sql)->toContain('`id` INT NOT NULL AUTO_INCREMENT');
     });
+
+    it('maps uuid type to UUID column type', function (): void {
+        $generator = new MySqlGenerator();
+
+        $table = new Table(
+            name: 'users',
+            columns: [
+                new Column(name: 'id', type: 'uuid', primaryKey: true),
+            ],
+        );
+
+        $sql = $generator->generateCreateTable($table);
+
+        expect($sql)->toContain('`id` UUID NOT NULL');
+    });
+
+    it('does not quote UUID() as a default SQL expression', function (): void {
+        $generator = new MySqlGenerator();
+
+        $table = new Table(
+            name: 'users',
+            columns: [
+                new Column(name: 'id', type: 'uuid', primaryKey: true, default: 'UUID()'),
+            ],
+        );
+
+        $sql = $generator->generateCreateTable($table);
+
+        expect($sql)->toContain('DEFAULT UUID()');
+    });
+
+    it('does not quote UUID_V7() as a default SQL expression', function (): void {
+        $generator = new MySqlGenerator();
+
+        $table = new Table(
+            name: 'users',
+            columns: [
+                new Column(name: 'id', type: 'uuid', primaryKey: true, default: 'UUID_V7()'),
+            ],
+        );
+
+        $sql = $generator->generateCreateTable($table);
+
+        expect($sql)->toContain('DEFAULT UUID_V7()');
+    });
 });

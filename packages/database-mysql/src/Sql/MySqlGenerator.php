@@ -46,6 +46,7 @@ class MySqlGenerator implements SqlGeneratorInterface
         'blob' => 'BLOB',
         'binary' => 'BLOB',
         'json' => 'JSON',
+        'uuid' => 'UUID',
     ];
 
     /**
@@ -57,8 +58,11 @@ class MySqlGenerator implements SqlGeneratorInterface
         'CURRENT_TIMESTAMP',
         'CURRENT_DATE',
         'CURRENT_TIME',
-        'NOW()',
+        'NOW',
         'NULL',
+        'UUID',       // MySQL UUIDv4 & MariaDB UUIDv1
+        'UUID_V4',    // MariaDB 11.7+ UUIDv4
+        'UUID_V7',    // MariaDB 11.7+ UUIDv7
     ];
 
     public function generateUp(
@@ -357,10 +361,10 @@ class MySqlGenerator implements SqlGeneratorInterface
         string $value,
     ): bool {
         $upperValue = strtoupper($value);
-
+        
         return array_any(
             self::SQL_EXPRESSIONS,
-            fn ($expression) => $upperValue === $expression || str_starts_with($upperValue, $expression),
+            static fn (string $expr): bool => $upperValue === $expr || str_starts_with($upperValue, $expr),
         );
     }
 
